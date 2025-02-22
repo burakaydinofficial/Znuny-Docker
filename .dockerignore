@@ -1,0 +1,22 @@
+# Node.js dependencies
+node_modules
+
+# Log files
+*.log
+
+# Environment files
+.env
+
+# Build directories
+dist
+build
+
+# Git files
+.git
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
