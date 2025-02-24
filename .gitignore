@@ -12,6 +12,10 @@
 .vstags
 .vscode
 
+# Docker-Compose lifetime
+znuny-data/*
+db-data/*
+
 # Znuny
 .procmailrc
 /ARCHIVE

@@ -1,0 +1,30 @@
+
+services:
+  znuny:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: standalone
+    ports:
+      - "80:80"
+    volumes:
+      # - ./znuny-data:/opt/znuny // It is not possible to mount a volume to this directory, should be mountet to more specific directories
+      - ./znuny-data/znuny:/opt/znuny/znuny # Placeholder
+    depends_on:
+      - db
+
+  db:
+    build: mariadb:10.5
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: znuny
+      MYSQL_USER: znunyuser
+      MYSQL_PASSWORD: znunypass
+    ports:
+      - "3306:3306"  # Mapping container's port 3306 to host port 3306
+    volumes:
+      - ./db-data:/var/lib/mysql
+      - type: bind
+        source: ./Docker/50-znuny_config.cnf
+        target: /etc/mysql/mariadb.conf.d/50-znuny_config.cnf
+        read_only: true  # Ensures it is not world-writable
