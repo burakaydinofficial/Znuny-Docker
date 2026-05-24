@@ -6,6 +6,7 @@
 # did not receive this file, see http://www.gnu.org/licenses/agpl.txt.
 # --
 ## nofilter(TidyAll::Plugin::Znuny::Perl::Pod::NamePod)
+## nofilter(TidyAll::Plugin::Znuny::Deprecated::AjaxAttachment)
 
 package scripts::Migration::Znuny::MigrateSysConfigSettings;    ## no critic
 
@@ -13,7 +14,7 @@ use strict;
 use warnings;
 use utf8;
 
-use IO::Interactive qw(is_interactive);
+use IO::Interactive               qw(is_interactive);
 use Kernel::System::VariableCheck qw(:all);
 
 use parent qw(scripts::Migration::Base);
@@ -45,18 +46,43 @@ sub _GetMigrateSysConfigSettings {
     my ( $Self, %Param ) = @_;
 
     my %MigrateSysConfigSettings = (
-
         "Loader::Agent::CommonJS###000-Framework" => {
             UpdateEffectiveValue => {
-                'thirdparty/jquery-jstree-3.3.7/jquery.jstree.js' => 'thirdparty/jquery-jstree-3.3.8/jquery.jstree.js',
-                'thirdparty/nunjucks-3.2.2/nunjucks.min.js'       => 'thirdparty/nunjucks-3.2.3/nunjucks.min.js',
+                'thirdparty/jscolor-2.4.6/jscolor.js' =>
+                    'thirdparty/jscolor-2.5.2/jscolor.js',
             },
         },
-        "Loader::Customer::CommonJS###000-Framework" => {
-            UpdateEffectiveValue => {
-                'thirdparty/jquery-jstree-3.3.7/jquery.jstree.js' => 'thirdparty/jquery-jstree-3.3.8/jquery.jstree.js',
-                'thirdparty/nunjucks-3.2.2/nunjucks.min.js'       => 'thirdparty/nunjucks-3.2.3/nunjucks.min.js',
+        "Frontend::ToolBarModule###210-Ticket::TicketSearchProfile" => {
+            AddEffectiveValue => {
+                Block => 'ToolBarSearchProfile',
             },
+        },
+        "Frontend::ToolBarModule###220-Ticket::TicketSearchFulltext" => {
+            AddEffectiveValue => {
+                Block => 'ToolBarSearchFulltext',
+            },
+        },
+        "Frontend::ToolBarModule###230-CICSearchCustomerID" => {
+            AddEffectiveValue => {
+                Block => 'ToolBarCICSearchCustomerID',
+            },
+        },
+        "Frontend::ToolBarModule###240-CICSearchCustomerUser" => {
+            AddEffectiveValue => {
+                Block => 'ToolBarCICSearchCustomerUser',
+            },
+        },
+        "Ticket::Frontend::AgentTicketProcess::CustomerIDReadOnly" => {
+            UpdateName => "Ticket::Frontend::AgentTicketProcess###CustomerIDReadOnly",
+        },
+        "Ticket::Frontend::AgentTicketPhone::CustomerIDReadOnly" => {
+            UpdateName => "Ticket::Frontend::AgentTicketPhone###CustomerIDReadOnly",
+        },
+        "Ticket::Frontend::AgentTicketEmail::CustomerIDReadOnly" => {
+            UpdateName => "Ticket::Frontend::AgentTicketEmail###CustomerIDReadOnly",
+        },
+        "Ticket::Frontend::AgentTicketCustomer::CustomerIDReadOnly" => {
+            UpdateName => "Ticket::Frontend::AgentTicketCustomer###CustomerIDReadOnly",
         },
     );
 

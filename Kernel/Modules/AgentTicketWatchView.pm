@@ -16,7 +16,7 @@ use utf8;
 our $ObjectManagerDisabled = 1;
 
 use Kernel::System::VariableCheck qw(:all);
-use Kernel::Language qw(Translatable);
+use Kernel::Language              qw(Translatable);
 
 sub new {
     my ( $Type, %Param ) = @_;
@@ -109,7 +109,7 @@ sub Run {
         next COLUMNNAME if $FilterValue eq 'DeleteFilter';
 
         if ( $ColumnName eq 'CustomerID' ) {
-            push @{ $ColumnFilter{$ColumnName} }, $FilterValue;
+            push @{ $ColumnFilter{$ColumnName} },           $FilterValue;
             push @{ $ColumnFilter{ $ColumnName . 'Raw' } }, $FilterValue;
             $GetColumnFilter{$ColumnName} = $FilterValue;
         }
@@ -211,6 +211,9 @@ sub Run {
             Message => Translatable('Feature not enabled!'),
         );
     }
+
+    my $UserIDForSearch = $Config->{TicketSearchWithAdminUser} ? 1 : $Self->{UserID};
+
     my %Filters = (
         All => {
             Name   => Translatable('All'),
@@ -219,7 +222,7 @@ sub Run {
                 OrderBy      => $OrderBy,
                 SortBy       => $SortByS,
                 WatchUserIDs => [ $Self->{UserID} ],
-                UserID       => 1,
+                UserID       => $UserIDForSearch,
                 Permission   => 'ro',
             },
         },
@@ -227,14 +230,14 @@ sub Run {
             Name   => Translatable('New Article'),
             Prio   => 1001,
             Search => {
-                WatchUserIDs => [ $Self->{UserID} ],
-                TicketFlag   => {
+                WatchUserIDs  => [ $Self->{UserID} ],
+                NotTicketFlag => {
                     Seen => 1,
                 },
                 TicketFlagUserID => $Self->{UserID},
                 OrderBy          => $OrderBy,
                 SortBy           => $SortByS,
-                UserID           => 1,
+                UserID           => $UserIDForSearch,
                 Permission       => 'ro',
             },
         },
@@ -246,7 +249,7 @@ sub Run {
                 WatchUserIDs => [ $Self->{UserID} ],
                 OrderBy      => $OrderBy,
                 SortBy       => $SortByS,
-                UserID       => 1,
+                UserID       => $UserIDForSearch,
                 Permission   => 'ro',
             },
         },
@@ -259,7 +262,7 @@ sub Run {
                 WatchUserIDs                  => [ $Self->{UserID} ],
                 OrderBy                       => $OrderBy,
                 SortBy                        => $SortByS,
-                UserID                        => 1,
+                UserID                        => $UserIDForSearch,
                 Permission                    => 'ro',
             },
         },
@@ -312,48 +315,6 @@ sub Run {
             Result => 'ARRAY',
             Limit  => $Limit,
         );
-    }
-
-    # prepare shown tickets for new article tickets
-    if ( $Filter eq 'New' ) {
-
-        my @OriginalViewableTicketsAll = $TicketObject->TicketSearch(
-            %{ $Filters{All}->{Search} },
-            Result => 'ARRAY',
-        );
-
-        my %OriginalViewableTicketsNotNew;
-        for my $TicketID (@OriginalViewableTickets) {
-            $OriginalViewableTicketsNotNew{$TicketID} = 1;
-        }
-
-        my @OriginalViewableTicketsTmp;
-        TICKETID:
-        for my $TicketIDAll (@OriginalViewableTicketsAll) {
-            next TICKETID if $OriginalViewableTicketsNotNew{$TicketIDAll};
-            push @OriginalViewableTicketsTmp, $TicketIDAll;
-        }
-        @OriginalViewableTickets = @OriginalViewableTicketsTmp;
-
-        my @ViewableTicketsAll = $TicketObject->TicketSearch(
-            %{ $Filters{All}->{Search} },
-            %ColumnFilter,
-            Result => 'ARRAY',
-            Limit  => $Limit,
-        );
-
-        my %ViewableTicketsNotNew;
-        for my $TicketID (@ViewableTickets) {
-            $ViewableTicketsNotNew{$TicketID} = 1;
-        }
-
-        my @ViewableTicketsTmp;
-        TICKETID:
-        for my $TicketIDAll (@ViewableTicketsAll) {
-            next TICKETID if $ViewableTicketsNotNew{$TicketIDAll};
-            push @ViewableTicketsTmp, $TicketIDAll;
-        }
-        @ViewableTickets = @ViewableTicketsTmp;
     }
 
     my $View = $ParamObject->GetParam( Param => 'View' ) || '';
@@ -439,16 +400,6 @@ sub Run {
             %ColumnFilter,
             Result => 'COUNT',
         ) || 0;
-
-        # prepare count for new article tickets
-        if ( $FilterColumn eq 'New' ) {
-            my $CountAll = $TicketObject->TicketSearch(
-                %{ $Filters{All}->{Search} },
-                %ColumnFilter,
-                Result => 'COUNT',
-            ) || 0;
-            $Count = $CountAll - $Count;
-        }
 
         $NavBarFilter{ $Filters{$FilterColumn}->{Prio} } = {
             Count  => $Count,

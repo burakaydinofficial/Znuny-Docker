@@ -262,6 +262,7 @@ $Self->IsDeeply(
         ChangeBy               => 1,
         ChangeTime             => $Article{ChangeTime},
         Charset                => 'ISO-8859-15',
+        CommunicationChannel   => 'Internal',
         CommunicationChannelID => 3,
         ContentCharset         => 'ISO-8859-15',
         ContentType            => 'text/plain; charset=ISO-8859-15',
@@ -335,8 +336,8 @@ $Self->True(
 );
 
 my @ExpectedData = (
-    'CustomerUser', 'CustomerCompany', 'QueueData', 'TypeData', 'PriorityData', 'ServiceData',
-    'SLAData', 'OwnerData', 'ResponsibleData', 'CreateByData', 'Article'
+    'CustomerUser', 'CustomerCompany', 'QueueData',       'TypeData',     'PriorityData', 'ServiceData',
+    'SLAData',      'OwnerData',       'ResponsibleData', 'CreateByData', 'Article'
 );
 
 for my $Key ( sort @ExpectedData ) {

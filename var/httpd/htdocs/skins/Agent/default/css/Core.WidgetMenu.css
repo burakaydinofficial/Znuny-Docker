@@ -395,10 +395,10 @@ ul.ContextFunctions li:last-child:hover > a {
     color: var(--black);
     display: flex;
     align-items: center;
-    border-bottom: var(--border-width) var(--border-solid) var(--border);
+    /*border-bottom: var(--border-width) var(--border-solid) var(--border-color);*/
     transition: var(--main-transition);
     /*letter-spacing: 1px;*/
-    text-transform: uppercase;
+    /*text-transform: uppercase;*/
     /*padding: 0 6px;*/
     color: var(--gray-darker);
     font-size: var(--font-size-sm);
@@ -412,13 +412,13 @@ ul.ContextFunctions li:last-child:hover > a {
     background: var(--gray-light);
 }
 
-.ActionRow > .Actions li > a, 
+.ActionRow > .Actions li > a,
 .ActionRow > .Actions li > span {
     padding: var(--padding-xs) var(--padding-sm);
     border-radius: var(--border-radius-xxs);
 }
 
-.ActionRow > .Actions li:hover > a, 
+.ActionRow > .Actions li:hover > a,
 .ActionRow > .Actions li:hover > span {
     background: var(--gray-light);
 }
@@ -636,7 +636,7 @@ ul.ContextFunctions li:last-child:hover > a {
         background: -moz-linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(2,0,36,0) 100%);
         background: -webkit-linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(2,0,36,0) 100%);
         background: linear-gradient(0deg, rgba(255,255,255,1) 0%, rgba(2,0,36,0) 100%);
-        filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#ffffff",endColorstr="#020024",GradientType=1); 
+        filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#ffffff",endColorstr="#020024",GradientType=1);
         width: 100%;
         height: 50px;
         position: absolute;
@@ -678,7 +678,7 @@ ul.ContextFunctions li:last-child:hover > a {
         transition: var(--main-transition);
     }
 
-    /* 
+    /*
      * has-ticket-overlay-opened | has-article-overlay-opened
     */
 
@@ -709,7 +709,7 @@ ul.ContextFunctions li:last-child:hover > a {
         z-index: 9999;
     }
 
-    
+
 }
 
 
@@ -820,7 +820,7 @@ ul.ContextFunctions li:last-child:hover > a {
 }
 
 .BottomRow {
-    background: (--white);
+    background: var(--white);
     border: var(--border-width) var(--border-solid) var(--border-color);
     padding: var(--padding-sm) var(--padding-lg);
     border-bottom-left-radius: var(--border-radius-sm);

@@ -14,7 +14,7 @@ use strict;
 use warnings;
 
 use Kernel::System::VariableCheck qw(:all);
-use Kernel::Language qw(Translatable);
+use Kernel::Language              qw(Translatable);
 
 use parent('Kernel::System::AsynchronousExecutor');
 
@@ -80,8 +80,8 @@ sub Run {
     # view diff file
     # ------------------------------------------------------------ #
     if ( $Self->{Subaction} eq 'ViewDiff' ) {
-        my $Name    = $ParamObject->GetParam( Param => 'Name' )    || '';
-        my $Version = $ParamObject->GetParam( Param => 'Version' ) || '';
+        my $Name     = $ParamObject->GetParam( Param => 'Name' )    || '';
+        my $Version  = $ParamObject->GetParam( Param => 'Version' ) || '';
         my $Location = $ParamObject->GetParam( Param => 'Location' );
 
         # get package
@@ -177,8 +177,8 @@ sub Run {
     # view package
     # ------------------------------------------------------------ #
     if ( $Self->{Subaction} eq 'View' ) {
-        my $Name    = $ParamObject->GetParam( Param => 'Name' )    || '';
-        my $Version = $ParamObject->GetParam( Param => 'Version' ) || '';
+        my $Name     = $ParamObject->GetParam( Param => 'Name' )    || '';
+        my $Version  = $ParamObject->GetParam( Param => 'Version' ) || '';
         my $Location = $ParamObject->GetParam( Param => 'Location' );
         my %Frontend;
 
@@ -270,7 +270,7 @@ sub Run {
         }
         my @DatabaseBuffer;
 
-        # correct any 'dos-style' line endings - http://bugs.otrs.org/show_bug.cgi?id=9838
+        # correct any 'dos-style' line endings
         ${$Package} =~ s{\r\n}{\n}xmsg;
 
         # create MD5 sum and add it into existing package structure
@@ -712,6 +712,17 @@ sub Run {
                                     %{$Hash},
                                 },
                             );
+
+                            $LayoutObject->Block(
+                                Name => "PackageItemFilelistFileNote",
+                                Data => {
+                                    Name    => $Structure{Name}->{Content},
+                                    Version => $Structure{Version}->{Content},
+                                    File    => $File,
+                                    %{$Hash},
+                                },
+                            );
+
                         }
                     }
                     else {
@@ -878,8 +889,8 @@ sub Run {
         # challenge token check for write action
         $LayoutObject->ChallengeTokenCheck();
 
-        my $Name    = $ParamObject->GetParam( Param => 'Name' )    || '';
-        my $Version = $ParamObject->GetParam( Param => 'Version' ) || '';
+        my $Name              = $ParamObject->GetParam( Param => 'Name' )    || '';
+        my $Version           = $ParamObject->GetParam( Param => 'Version' ) || '';
         my $IntroReinstallPre = $ParamObject->GetParam( Param => 'IntroReinstallPre' )
             || '';
 
@@ -974,8 +985,8 @@ sub Run {
         # challenge token check for write action
         $LayoutObject->ChallengeTokenCheck();
 
-        my $Name    = $ParamObject->GetParam( Param => 'Name' )    || '';
-        my $Version = $ParamObject->GetParam( Param => 'Version' ) || '';
+        my $Name               = $ParamObject->GetParam( Param => 'Name' )    || '';
+        my $Version            = $ParamObject->GetParam( Param => 'Version' ) || '';
         my $IntroReinstallPost = $ParamObject->GetParam( Param => 'IntroReinstallPost' )
             || '';
 
@@ -1052,8 +1063,8 @@ sub Run {
         # challenge token check for write action
         $LayoutObject->ChallengeTokenCheck();
 
-        my $Name    = $ParamObject->GetParam( Param => 'Name' )    || '';
-        my $Version = $ParamObject->GetParam( Param => 'Version' ) || '';
+        my $Name              = $ParamObject->GetParam( Param => 'Name' )    || '';
+        my $Version           = $ParamObject->GetParam( Param => 'Version' ) || '';
         my $IntroUninstallPre = $ParamObject->GetParam( Param => 'IntroUninstallPre' )
             || '';
 
@@ -1147,8 +1158,8 @@ sub Run {
         # challenge token check for write action
         $LayoutObject->ChallengeTokenCheck();
 
-        my $Name    = $ParamObject->GetParam( Param => 'Name' )    || '';
-        my $Version = $ParamObject->GetParam( Param => 'Version' ) || '';
+        my $Name               = $ParamObject->GetParam( Param => 'Name' )    || '';
+        my $Version            = $ParamObject->GetParam( Param => 'Version' ) || '';
         my $IntroUninstallPost = $ParamObject->GetParam( Param => 'IntroUninstallPost' )
             || '';
 
@@ -1446,7 +1457,7 @@ sub Run {
         my $JSON = $LayoutObject->JSONEncode(
             Data => {
                 Success        => 1,
-                UpgradeStatus  => $SystemData{Status} || '',
+                UpgradeStatus  => $SystemData{Status}  || '',
                 UpgradeSuccess => $SystemData{Success} || '',
                 PackageList    => \@PackageList,
             },
@@ -1600,6 +1611,18 @@ sub Run {
         );
     }
 
+    my %SysConfigCategories = $Kernel::OM->Get('Kernel::System::SysConfig')->ConfigurationCategoriesGet();
+
+    my %SysConfigCategory;
+    CATEGORY:
+    for my $CategoryName ( sort keys %SysConfigCategories ) {
+        next CATEGORY if !$SysConfigCategories{$CategoryName}->{PackageName};
+
+        my $PackageName = $SysConfigCategories{$CategoryName}->{PackageName};
+        my $Link        = $LayoutObject->{Baselink} . 'Action=AdminSystemConfiguration;Category=' . $PackageName;
+        $SysConfigCategory{$PackageName} = $Link;
+    }
+
     for my $Package (@RepositoryList) {
         my %Data = $Self->_MessageGet( Info => $Package->{Description} );
 
@@ -1608,10 +1631,11 @@ sub Run {
             Data => {
                 %{$Package},
                 %Data,
-                Name    => $Package->{Name}->{Content},
-                Version => $Package->{Version}->{Content},
-                Vendor  => $Package->{Vendor}->{Content},
-                URL     => $Package->{URL}->{Content},
+                Name          => $Package->{Name}->{Content},
+                Version       => $Package->{Version}->{Content},
+                Vendor        => $Package->{Vendor}->{Content},
+                URL           => $Package->{URL}->{Content},
+                SysConfigLink => $SysConfigCategory{ $Package->{Name}->{Content} },
             },
         );
 

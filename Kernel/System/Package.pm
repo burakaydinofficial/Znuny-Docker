@@ -22,7 +22,7 @@ use Kernel::System::SysConfig;
 use Kernel::System::WebUserAgent;
 
 use Kernel::System::VariableCheck qw(:all);
-use Kernel::Language qw(Translatable);
+use Kernel::Language              qw(Translatable);
 
 use parent qw(Kernel::System::EventHandler);
 
@@ -190,7 +190,7 @@ sub RepositoryList {
         }
 
         # Correct any 'dos-style' line endings that might have been introduced by saving an
-        #   opm file from a mail client on Windows (see http://bugs.otrs.org/show_bug.cgi?id=9838).
+        # opm file from a mail client on Windows.
         $Content =~ s{\r\n}{\n}xmsg;
         $Package{MD5sum} = $MainObject->MD5sum( String => \$Content );
 
@@ -390,7 +390,7 @@ sub RepositoryAdd {
             . Translatable('not installed') . '\', '
             . ' current_timestamp, 1, current_timestamp, 1)',
         Bind => [
-            \$Structure{Name}->{Content}, \$Structure{Version}->{Content},
+            \$Structure{Name}->{Content},   \$Structure{Version}->{Content},
             \$Structure{Vendor}->{Content}, \$FileName, \$Content,
         ],
     );
@@ -863,7 +863,7 @@ sub PackageUpgrade {
         if ( $Structure{Version}->{Content} eq $InstalledVersion ) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
-                Message =>
+                Message  =>
                     "Can't upgrade, package '$Structure{Name}->{Content}-$InstalledVersion' already installed!",
             );
 
@@ -872,7 +872,7 @@ sub PackageUpgrade {
         else {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
-                Message =>
+                Message  =>
                     "Can't upgrade, installed package '$InstalledVersion' is newer as '$Structure{Version}->{Content}'!",
             );
 
@@ -1325,8 +1325,7 @@ Returns:
 sub GetRequiredPackages {
     my ( $Self, %Param ) = @_;
 
-    my $LogObject     = $Kernel::OM->Get('Kernel::System::Log');
-    my $PackageObject = $Kernel::OM->Get('Kernel::System::Package');
+    my $LogObject = $Kernel::OM->Get('Kernel::System::Log');
 
     NEEDED:
     for my $Needed (qw(Structure)) {
@@ -1352,12 +1351,12 @@ sub GetRequiredPackages {
         return;
     }
 
-    my @RepositoryList = $PackageObject->RepositoryList();
+    my @RepositoryList = $Self->RepositoryList();
     my @Requirements;
 
     for my $Element ( sort @{ $Param{Structure}->{PackageRequired} } ) {
 
-        my $PackageIsInstalled = $PackageObject->PackageIsInstalled(
+        my $PackageIsInstalled = $Self->PackageIsInstalled(
             Name => $Element->{Content}
         );
 
@@ -1382,7 +1381,7 @@ sub GetRequiredPackages {
                 last LOCAL;
             }
 
-            my $CheckVersion = $PackageObject->CheckVersion(
+            my $CheckVersion = $Self->CheckVersion(
                 VersionNew       => $Version,
                 VersionInstalled => $InstalledVersion,
                 Type             => 'Min',
@@ -1672,7 +1671,7 @@ sub RepositoryPackageListGet {
     if ( @Packages && !$PackageForRequestedFramework ) {
         $Kernel::OM->Get('Kernel::System::Log')->Log(
             Priority => 'notice',
-            Message =>
+            Message  =>
                 Translatable(
                 'No packages for your framework version found in this repository, it only contains packages for other framework versions.'
                 ),
@@ -3262,6 +3261,7 @@ system data.
     my %Result = $PackageObject->PackageUpgradeAllIsRunning();
 
 Returns:
+
     %Result = (
         IsRunning      => 1,             # or 0 if it is not running
         UpgradeStatus  => 'Running',     # (optional) 'Running' or 'Finished' or 'TimedOut',
@@ -3316,7 +3316,7 @@ sub PackageUpgradeAllIsRunning {
 
     return (
         IsRunning      => $IsRunning // 0,
-        UpgradeStatus  => $SystemData{Status} || '',
+        UpgradeStatus  => $SystemData{Status}  || '',
         UpgradeSuccess => $SystemData{Success} || '',
     );
 }
@@ -3492,6 +3492,14 @@ sub GetRequiredModules {
 }
 
 =begin Internal:
+
+Private functions used by this package (not part of the documented public API).
+
+=end Internal:
+
+=head2 _Download()
+
+download a file
 
 =cut
 
@@ -3852,7 +3860,7 @@ sub _CheckPackageDepends {
                 if ( $Param{Name} eq $Module->{Content} && !$Param{Force} ) {
                     $Kernel::OM->Get('Kernel::System::Log')->Log(
                         Priority => 'error',
-                        Message =>
+                        Message  =>
                             "Sorry, can't uninstall package $Param{Name}, "
                             . "because package $Local->{Name}->{Content} depends on it!",
                     );
@@ -4998,8 +5006,6 @@ sub DESTROY {
 }
 
 1;
-
-=end Internal:
 
 =head1 TERMS AND CONDITIONS
 

@@ -23,7 +23,7 @@ use parent qw(
     Kernel::System::Ticket::TicketACL
 );
 
-use Kernel::Language qw(Translatable);
+use Kernel::Language              qw(Translatable);
 use Kernel::System::VariableCheck qw(:all);
 
 our @ObjectDependencies = (
@@ -43,6 +43,7 @@ our @ObjectDependencies = (
     'Kernel::System::Lock',
     'Kernel::System::Log',
     'Kernel::System::Main',
+    'Kernel::System::Mention',
     'Kernel::System::Priority',
     'Kernel::System::Queue',
     'Kernel::System::SLA',
@@ -589,10 +590,10 @@ sub TicketCreate {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, ?, ?, 0, ?,
                 current_timestamp, ?, current_timestamp, ?)',
         Bind => [
-            \$Param{TN}, \$Param{Title}, \$Param{TypeID}, \$Param{QueueID},
+            \$Param{TN},         \$Param{Title},   \$Param{TypeID}, \$Param{QueueID},
             \$Param{LockID},     \$Param{OwnerID}, \$Param{ResponsibleID},
             \$Param{PriorityID}, \$Param{StateID}, \$Param{ServiceID},
-            \$Param{SLAID}, \$ArchiveFlag, \$Param{UserID}, \$Param{UserID},
+            \$Param{SLAID},      \$ArchiveFlag,    \$Param{UserID}, \$Param{UserID},
         ],
     );
 
@@ -650,7 +651,7 @@ sub TicketCreate {
     if ( $Param{CustomerNo} || $Param{CustomerID} || $Param{CustomerUser} ) {
         $Self->TicketCustomerSet(
             TicketID => $TicketID,
-            No       => $Param{CustomerNo} || $Param{CustomerID} || '',
+            No       => $Param{CustomerNo}   || $Param{CustomerID} || '',
             User     => $Param{CustomerUser} || '',
             UserID   => $Param{UserID},
         );
@@ -2524,7 +2525,7 @@ sub TicketServiceList {
 
     # Return all Services, filtering by KeepChildren config.
     my %AllServices = $ServiceObject->ServiceList(
-        UserID => 1,
+        UserID       => 1,
         KeepChildren =>
             $Kernel::OM->Get('Kernel::Config')->Get('Ticket::Service::KeepChildren'),
     );
@@ -2649,7 +2650,7 @@ sub TicketServiceSet {
     $Self->HistoryAdd(
         TicketID    => $Param{TicketID},
         HistoryType => 'ServiceUpdate',
-        Name =>
+        Name        =>
             "\%\%$TicketNew{Service}\%\%$Param{ServiceID}\%\%$Ticket{Service}\%\%$Ticket{ServiceID}",
         CreateUserID => $Param{UserID},
     );
@@ -6387,8 +6388,8 @@ sub TicketMerge {
 
     my $Body = $ConfigObject->Get('Ticket::Frontend::AutomaticMergeText');
     $Body = $LanguageObject->Translate($Body);
-    $Body =~ s{<OTRS_TICKET>}{$MergeTicket{TicketNumber}}xms;
-    $Body =~ s{<OTRS_MERGE_TO_TICKET>}{$MainTicket{TicketNumber}}xms;
+    $Body =~ s{<OTRS_TICKET>}{$MergeTicket{TicketNumber}}gxms;
+    $Body =~ s{<OTRS_MERGE_TO_TICKET>}{$MainTicket{TicketNumber}}gxms;
 
     my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
 
@@ -6650,7 +6651,6 @@ sub TicketMergeLinkedObjects {
     my $DBObject = $Kernel::OM->Get('Kernel::System::DB');
 
     # Delete all duplicate links relations between merged tickets.
-    # See bug#12994 (https://bugs.otrs.org/show_bug.cgi?id=12994).
     $DBObject->Prepare(
         SQL => '
             SELECT target_key
@@ -6799,12 +6799,9 @@ sub TicketWatchGet {
     }
 
     if ( $Param{Notify} ) {
+        my $UserObject = $Kernel::OM->Get('Kernel::System::User');
 
         for my $UserID ( sort keys %Data ) {
-
-            # get user object
-            my $UserObject = $Kernel::OM->Get('Kernel::System::User');
-
             my %UserData = $UserObject->GetUserData(
                 UserID => $UserID,
                 Valid  => 1,
@@ -6816,15 +6813,8 @@ sub TicketWatchGet {
         }
     }
 
-    # check result
     if ( $Param{Result} && $Param{Result} eq 'ARRAY' ) {
-
-        my @UserIDs;
-
-        for my $UserID ( sort keys %Data ) {
-            push @UserIDs, $UserID;
-        }
-
+        my @UserIDs = sort keys %Data;
         return @UserIDs;
     }
 
@@ -6862,6 +6852,41 @@ sub TicketWatchSubscribe {
 
     # get database object
     my $DBObject = $Kernel::OM->Get('Kernel::System::DB');
+
+    #
+    # Check number of watched tickets of user and remove oldest redundant watch list entries.
+    #
+    my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
+    my $WatcherLimit = $ConfigObject->Get('Ticket::WatcherLimit');
+    if ($WatcherLimit) {
+        return if !$DBObject->Prepare(
+            SQL => '
+                SELECT   ticket_id
+                FROM     ticket_watcher
+                WHERE    user_id = ?
+                ORDER BY create_time ASC
+            ',
+            Bind => [
+                \$Param{WatchUserID},
+            ],
+        );
+
+        my @WatchedTicketIDs;
+        while ( my @Row = $DBObject->FetchrowArray() ) {
+            push @WatchedTicketIDs, $Row[0];
+        }
+
+        # >= because the one newly subscribed to here must also be counted
+        while ( @WatchedTicketIDs >= $WatcherLimit ) {
+            my $WatchedTicketIDToDelete = shift @WatchedTicketIDs;
+
+            return if !$Self->TicketWatchUnsubscribe(
+                TicketID    => $WatchedTicketIDToDelete,
+                WatchUserID => $Param{WatchUserID},
+                UserID      => $Param{UserID},
+            );
+        }
+    }
 
     # db access
     return if !$DBObject->Do(
@@ -7460,7 +7485,7 @@ sub TicketArticleStorageSwitch {
         if (%Index) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
-                Message =>
+                Message  =>
                     "Attachments of TicketID:$Param{TicketID}/ArticleID:$Article->{ArticleID} already in $Param{Destination}!",
             );
         }
@@ -7530,7 +7555,7 @@ sub TicketArticleStorageSwitch {
             else {
                 $Kernel::OM->Get('Kernel::System::Log')->Log(
                     Priority => 'error',
-                    Message =>
+                    Message  =>
                         "Corrupt file: $Attachment{Filename} (TicketID:$Param{TicketID}/ArticleID:$Article->{ArticleID})!",
                 );
 
@@ -7551,7 +7576,7 @@ sub TicketArticleStorageSwitch {
         if (%MD5Sums) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
-                Message =>
+                Message  =>
                     "Not all files are moved! (TicketID:$Param{TicketID}/ArticleID:$Article->{ArticleID})!",
             );
 
@@ -7582,7 +7607,7 @@ sub TicketArticleStorageSwitch {
             if ( $PlainMD5Sum ne $PlainMD5SumVerify ) {
                 $Kernel::OM->Get('Kernel::System::Log')->Log(
                     Priority => 'error',
-                    Message =>
+                    Message  =>
                         "Corrupt plain file: ArticleID: $Article->{ArticleID} ($PlainMD5Sum/$PlainMD5SumVerify)",
                 );
 

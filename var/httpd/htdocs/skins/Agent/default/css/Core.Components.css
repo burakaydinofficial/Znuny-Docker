@@ -77,6 +77,12 @@ handheld {
         transition: var(--main-transition);
     }
 
+    .icon-hover.Hidden,
+    .icon-hover-md.Hidden,
+    .icon-hover-sm.Hidden {
+        display: none;
+    }
+
     .Field .icon-hover,
     .Field .icon-hover-md,
     .Field .icon-hover-sm {
@@ -184,8 +190,6 @@ handheld {
         flex-flow: column;
         gap: var(--gap-xs);
         background: var(--main-bg-color);
-        /* needed so its ::after element does not cause horizontal overflow in parent containers */
-        overflow: hidden;
     }
 
     .card-item-wrapper .card-item {
@@ -383,6 +387,10 @@ handheld {
         padding: 0;
     }
 
+    .ui-datepicker td:first-child,  .ui-datepicker th:first-child {
+        padding: 0;
+    }
+
     .ui-datepicker.ui-widget-content td a.ui-state-default {
         font-size: var(--font-size-sm);
     }
@@ -454,22 +462,6 @@ handheld {
         display: flex;
         justify-content: space-between;
         word-wrap: break-word;
-    }
-
-    /* .mentions-widget ul li:hover {
-        background: var(--main-font-color);
-        transition: var(--main-transition);
-    } */
-
-    .mentions-widget ul li .email-wrapper {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        gap: var(--gap-xs);
-    }
-
-    .mentions-widget ul li .email-wrapper span:nth-child(2) {
-        color: var(--gray-dark-semi);
     }
 
     /* **************************************** Buttons **************************************** */
@@ -683,6 +675,7 @@ handheld {
         position: relative;
         border-radius: var(--border-radius-xxs);
         gap: var(--gap-md);
+        margin-bottom: var(--margin-xl);
     }
 
     .MessageBrowser i,
@@ -722,6 +715,8 @@ handheld {
         text-align: center;
     }
 
+
+
     /* Error MessageBox*/
     .MessageBox.Error {
         background: #f8d7da;
@@ -736,6 +731,7 @@ handheld {
 
     /* ************************************* Attachment Component ********************************* */
 
+    .component-file,
     .component-attachment {
         display: flex;
         flex-direction: column;
@@ -756,16 +752,20 @@ handheld {
         margin-top: var(--margin-sm);
     }
 
-    .outer-upload-file {
-        display: flex;
-        min-width: 100%;
+    /* Hide Dynamic Fields card only when .cardContent contains .Row but none are visible.
+    :has() is supported by current browsers (Chrome 105+, Firefox 121+, Safari 15.4+).
+    If there is no .Row at all, do not hide (other markup may still be shown).
+    */
+    .cardDynamicField:has(.cardContent .Row):not(:has(.cardContent .Row:not(.Hidden):not([style*="display: none"]))) {
+        display: none;
     }
 
-    .outer-upload-file .DnDUpload {}
-
-    .outer-upload-file .DnDUpload .ReadyForUpload {
-        display: flex;
-        align-content: center;
+    /* Hide Article Dynamic Fields card only when .cardContent contains .Row but none are visible.
+    :has() is supported by current browsers (Chrome 105+, Firefox 121+, Safari 15.4+).
+    If there is no .Row at all, do not hide (other markup may still be shown).
+    */
+    .cardArticleDynamicField:has(.cardContent .Row):not(:has(.cardContent .Row:not(.Hidden):not([style*="display: none"]))) {
+        display: none;
     }
 
     .AttachmentListContainer {
@@ -886,9 +886,24 @@ handheld {
         font-weight: var(--medium);
         text-overflow: ellipsis;
         overflow: hidden;
-        white-space: pre;
+        white-space: pre-line;
         min-width: 125px;
         max-width: 300px;
+        height: 50px;
+        max-height: 50px;
+        line-height: normal;
+    }
+
+    table.AttachmentList tbody tr td.OptionIcon,
+    table.AttachmentList tbody tr td:has(a){
+        padding: 0;
+        min-width: 40px;
+    }
+
+    table.AttachmentList tbody tr td a.AttachmentPreview{
+        border: unset;
+        float: unset;
+        background-color: unset;
     }
 
     table.AttachmentList tbody tr:nth-child(2n) td {
@@ -903,14 +918,16 @@ handheld {
         display: block;
     }
 
-    table.AttachmentList tbody tr,
-    table.AttachmentList tbody tr td {
-        max-height: 50px;
-        line-height: normal;
-    }
-
     table.AttachmentList tbody tr td {
         border-top: var(--border-width) var(--border-solid) var(--border-color);
+    }
+
+    table.AttachmentList tbody tr td:first-child {
+        width: 100%;
+        /* width: 40em; */
+        /* min-width: 40em; */
+        /* max-width: 40em; */
+        word-break: break-all;
     }
 
     table.AttachmentList tbody tr:first-child td {
@@ -921,9 +938,6 @@ handheld {
         color: var(--primary-color);
     }
 
-    table.AttachmentList .Filetype {
-        display: none;
-    }
 
     table.AttachmentList .Filesize {
         color: var(--gray-dark-semi);
@@ -941,15 +955,14 @@ handheld {
     }*/
 
     table.AttachmentList tbody tr td:last-child {
-        width: 100%;
         text-align: right;
         padding-top: 0;
         padding-bottom: 0;
     }
-
+/*
     table.AttachmentList .AttachmentDelete {
         display: inline-flex;
-    }
+    } */
 
     table.AttachmentList .AttachmentDelete i {
         width: 16px;
@@ -1177,15 +1190,9 @@ handheld {
         justify-content: flex-end;
         position: absolute;
         gap: var(--padding-md);
-        top: -30px;
+        top: 0px;
         right: 0;
     }
-
-    /* .main-search-component .search-ticket .create-tpl-btn {
-        position: absolute;
-        top: var(--padding-md);
-        right: 0;
-    } */
 
     .main-search-component .search-ticket .create-tpm-btn button {
         min-width: var(--btn-max-width-sm);
@@ -1781,20 +1788,22 @@ handheld {
         border-top: 0;
     }
 
-    .Pagination:empty {
-        padding: 0;
-        display: none;
-    }
-
     .SidebarColumn .Pagination {
         background: transparent;
         border-top: 0;
     }
 
     .Pagination:empty,
-    .Pagination:is(:empty),
+    .Pagination:is(:empty) {
+        padding: 0;
+        display: none;
+    }
+
     .Pagination:has(.page-links:empty) {
         padding: 0;
+    }
+
+    .Pagination .page-links:empty {
         display: none;
     }
 
@@ -1983,11 +1992,6 @@ handheld {
     }
 
     @media only screen and (max-width: 1024px) {
-
-        .WidgetSimple span.Pagination {
-            display: none;
-        }
-
         .WidgetSimple span.Pagination.AsBlock {
             display: flex;
         }
@@ -2054,7 +2058,13 @@ handheld {
         font-weight: var(--normal);
     }
 
-
-
+    /* Shared admin deployment notification layout. */
+    .DeploymentContainer {
+        display: flex;
+        white-space: nowrap;
+        gap: var(--gap-sm);
+        position: relative;
+        align-items: center;
+    }
 
 }
